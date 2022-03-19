@@ -1,0 +1,68 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description:
+  S3 Bucket for ELB AccessLog Create
+
+Metadata:
+  "AWS::CloudFormation::Interface":
+    ParameterGroups:
+      - Label:
+          default: "S3 Bucket for ELB AccessLog Configuration"
+        Parameters:
+          - ELBLogBucketName
+
+    ParameterLabels:
+      ELBLogBucketName:
+        default: "ELBLogBucketName"
+
+# ------------------------------------------------------------#
+# Input Parameters
+# ------------------------------------------------------------# 
+Parameters:
+  ELBLogBucketName:
+    Type: String
+
+# ------------------------------------------------------------#
+# ELBAccountId Mappings
+# ------------------------------------------------------------# 
+Mappings:
+  ELBAccountID:
+    ap-northeast-1:
+      "AccountId": ""
+
+Resources:
+# ------------------------------------------------------------#
+#  S3
+# ------------------------------------------------------------#        
+# ELBLogBucket
+  ELBLogBucket:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      BucketName: !Ref ELBLogBucketName
+
+#BucketPolicy
+  ELBLogBucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+      Bucket: !Ref ELBLogBucket
+      PolicyDocument:
+        Id: "AWSCFn-AccessLogs-Policy-20180920"
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AWSCFn-20180920
+            Effect: "Allow"
+            Action:
+              - "s3:PutObject"
+            Resource: !Sub "arn:aws:s3:::${ELBLogBucket}/AWSLogs/${AWS::AccountId}/*"
+            Principal:
+              AWS: !FindInMap [ ELBAccountId, !Ref "AWS::Region", AccountId ]
+
+# ------------------------------------------------------------#                
+# Output Parameters
+# ------------------------------------------------------------# 
+Outputs:
+#ELBLogBucket
+  ELBLogBucket:
+    Value: !Ref ELBLogBucket
+    Export:
+      Name: !Ref ELBLogBucketName
+
